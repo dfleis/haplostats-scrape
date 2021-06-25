@@ -4,62 +4,7 @@
 # form. To see all the arguments required by the form print the results
 # stored in the 'hapl.form' object.
 #
-# NOTES ON FORM FIELDS:
-#   * (checkbox): Not sure. By default all populations seem to be selected.
-#                 I have not yet tested how to remove populations/choose
-#                 specific population groups.
-#   * (text): The HLA type fields are text boxes and presumably would
-#             return an error if an invalid value is passed through the
-#             field. Fortunately, the string passed through using this
-#             web scraping script should be identical to strings entered
-#             if we were directly using the webpage.
-#   * (select): One way to find what values are considered valid for the
-#               different 'select' fields (dataset, haplotypeLoci) we can 
-#               inspect the HTML code from the haplostats.org webpage 
-#               (go to haplostats.org, right click and select 'Inspect'
-#                or enter Ctrl+Shift+I). One in the Inspect panel, we have
-#               to parse/navigate through the HTML structure to the fields
-#               corresponding to the 'select' field of interest. It's 
-#               difficult to provide an example in words, but expanding through
-#               the HTML structure we find (using the 'dataset' field as an
-#               example)
-#               <select id="hladataset" name="dataset" tabindex="1" onchange="datasetUpdated(this);">
-#                 <option value="84|NMDP.HIGHRES.1.1.0.2007-11-20|NMDP high res 2007">NMDP high res 2007</option>
-#                 <option value="21|NMDP.FULL-COMPOSITE.1.1.0.2011-08-25|NMDP full 2011" selected="">NMDP full 2011</option></select>
-#               If using Google Chrome, the field on the webpage should be highlighted
-#               when hovering over the correct HTML code.
-#               Valid values for the 'select' fields are listed next to 'option value='.
-#               Note that these values are NOT necessarily the same as the label provided
-#               in the select/dropdown options on the haplostats.org webpage itself.
-#     
-#               The only two 'select' fields seem to be 'dataset' and 'haplotypeLoci'
-#               and so I've gone through the HTML code and found the valid values for each
-#               of these fields.
-#               
-#               'dataset'
-#                 "84|NMDP.HIGHRES.1.1.0.2007-11-20|NMDP high res 2007"     # label = NMDP high res 2007
-#                 "21|NMDP.FULL-COMPOSITE.1.1.0.2011-08-25|NMDP full 2011"  # label = NMDP full 2011
-#               'haplotypeLoci'
-#                 "A~C~B~DRBX~DRB1~DQB1" # label = A~C~B~DRBX~DRB1~DQB1
-#                 "A~C~B~DRB1~DQB1"      # label = A~C~B~DRB1~DQB1
-#                 "C~B"                  # label = C~B
-#                 "A~C~B"                # label = A~C~B
-#                 "A~B~DRB1"             # label = A~B~DRB1
-#                 "A~C~B~DRB1"           # label = A~C~B~DRB1
-#
-# NOTE ON WEB SCRAPING: 
-#   * If the plan is to submit many requests to haplostats.org in quick succession
-#     (say, in a loop or using a *apply type function) then it is a good idea to look
-#     at the R library 'polite'. I have never used it but I know that it's a tool
-#     that is designed not to overwhelm web servers when doing automated web scraping.
-#
-# NOTE ON PARSING HTML PAGES:
-#   * Once we have produced 'hapl.html' we can use different HTML parsing tools to navigate 
-#     through the webpage & select the parts that we are interested in. I'm by no means an 
-#     expert in HTML parsing (or web scraping for that matter), but I know the "XML" library
-#     has some useful tools. String/character manipulation tools (via 'stringr' or 'stringi')
-#     may also be useful.
-#
+# See README.md for more detailed notes on this script.
 #
 #####################################################################################
 library(rvest)
