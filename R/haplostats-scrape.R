@@ -101,6 +101,14 @@ hapl.nodes3 <- html_nodes(hapl.nodes2[[9]], "table")
 
 # use html_table to try and automatically produce tables/matrices from the HTML tables
 hapl.tables <- html_table(hapl.nodes3, header = T) 
+#hapl.tables <- html_table(hapl.nodes3, header = F) 
+# Not sure if header = F or T will be easier to work with (if the headers were correctly read then
+# it'd be an easy choice of header = T, but this is not the case with the data we've scraped)
+
+
+########################## EXPLORE & CLEAN OUTPUT ##########################
+
+
 
 # hapl.tables contains what I think is the (A-C-B-DRB1-DQB1) Unphased Genotypes (HLA type) drop-down table
 # However, it's structured in a very ugly way since the 'Population HLA type frequencies' and 
@@ -109,6 +117,8 @@ hapl.tables <- html_table(hapl.nodes3, header = T)
 # I believe hapl.tables[[1]] contains the entire Unphased Genotype data (R tries to put it into 1 big table
 # but the number of columns is too large due to formatting issues), while the other hapl.tables[[i]]
 # tables look to be individual cells in some cases and groups of cells in other cases
+
+
 str(hapl.tables)
 length(hapl.tables)
 as.matrix(hapl.tables[[1]])
