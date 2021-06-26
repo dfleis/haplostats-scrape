@@ -3,7 +3,7 @@ Scripts and utilities for scraping data from the haplostats.org datasets
 
 ### Note on Web Scraping
 
-If the plan is to submit many requests to haplostats.org in quick succession (say, in a loop or using a *apply type function) then it is a good idea to look at the R library `polite`. I have never used it (yet) but I know that it's a tool that is designed not to overwhelm web servers when doing automated web scraping.
+If the plan is to submit many requests to haplostats.org in quick succession (say, in a loop or using a *apply type function) then it is a good idea to look at the R library `polite`. I have never used it (yet) but I know that it's a tool that is designed to not overwhelm web servers when doing automated web scraping.
 
 
 ### Overview
