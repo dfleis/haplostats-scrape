@@ -77,77 +77,58 @@ hapl.page <- session_submit(x = hapl.session, form = filled.form, submit = "_eve
 # structure whatever object submit_form creates to something more amenable to html parsing
 hapl.html <- read_html(hapl.page) 
 
-# (the following is the same text as in the preamble written at the top of this script)
-# Once we have produced 'hapl.html' we can use different HTML parsing tools to navigate 
-# through the webpage & select the parts that we are interested in. I'm by no means an 
-# expert in HTML parsing (or web scraping for that matter), but I know the "XML" library
-# has some useful tools. String/character manipulation tools (via 'stringr' or 'stringi')
-# may also be useful.
+# After some googling I think want to use is 'CSS selectors' in parsing/navigating our HTML page.
+# For example
+#   * If we want to select elements with 'class="XYZ"' then we'd write ".XYZ", i.e. 
+#     html_elements(hapl.html, ".display") will return elements of class=".display" (I think...).
+#   * If we want to select elements with 'id="ABC"' then we'd write "#ABC", i.e.
+#     html_elements(hapl.html, "#pairedFrequencies") will return elements of id="pairedFrequencies".
+# See https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_Selectors for more details on
+# these kinds of selectors and their notation (rvest "implements the majority of CSS3 selectors").
 
-################# IMPORTANT #################
-# The following code is just what I found to work. It may not be robust to different
-# inputs since I manually select different parts of the HTML structure (selecting 
-# hapl.nodes1[[3]] to get to the sub-tree containing the example table, and
-# selecting hapl.nodes2[[9]] to get to the sub-sub-tree which contains the 
-# 'Unhphased Genotypes' data. These indices may not be the same if we enter different
-# HLA types when submitting the form.
+# PHASED GENOTYPES
+hapl.elem.p <- html_elements(hapl.html, "#pairedFrequencies") 
+# UNPHASED GENOTYPES
+hapl.elem.u <- html_elements(hapl.html, "#mugFrequencies")
 
-# descending the nested 'div' html structuring (I'm not sure if this is the right nomenclature)
-hapl.nodes1 <- html_nodes(hapl.html, "div")
-hapl.nodes2 <- html_nodes(hapl.nodes1[[3]], "div")
-# hapl.nodes2[[9]] corresponds to <div id="_title_A-C-B-DRB1-DQB1_mug_id" ... which 
-# contains the unphased genotype data (given the provided form values)
-hapl.nodes3 <- html_nodes(hapl.nodes2[[9]], "table") 
-
-# use html_table to try and automatically produce tables/matrices from the HTML tables
-hapl.tables <- html_table(hapl.nodes3, header = T) 
-#hapl.tables <- html_table(hapl.nodes3, header = F) 
-# Not sure if header = F or T will be easier to work with (if the headers were correctly read then
-# it'd be an easy choice of header = T, but this is not the case with the data we've scraped)
-
-
-########################## EXPLORE & CLEAN OUTPUT ##########################
+# if we want the 'raw text' instead of letting rvest try to automatically make it into a table
+hapl.txt.p <- html_text2(hapl.elem.p) # NOTE TO SELF: Maybe try using strsplit on "\n" or "\t"?
+hapl.txt.u <- html_text2(hapl.elem.u)
 
 
 
-# hapl.tables contains what I think is the (A-C-B-DRB1-DQB1) Unphased Genotypes (HLA type) drop-down table
-# However, it's structured in a very ugly way since the 'Population HLA type frequencies' and 
-# 'HLA typing resolution score' headers are not aligned in the same column (and so R reads it as 3 different
-# columns)
-# I believe hapl.tables[[1]] contains the entire Unphased Genotype data (R tries to put it into 1 big table
-# but the number of columns is too large due to formatting issues), while the other hapl.tables[[i]]
-# tables look to be individual cells in some cases and groups of cells in other cases
+##### BELOW IS TESTING GARBAGE
+
+su1 <- unlist(strsplit(hapl.txt.u, split = c("\n", "\t")))
+su2 <- unlist(strsplit(su1, split = "\t"))
+su2[su2 != ""]
+
+su[!(su %in% c("", "\n", "\t"))]
+
+str(su)
+
+# try letting rvest put it in a table and see how well it does with the format
+hapl.tab.p <- html_table(hapl.elem.p, na.strings = c("", "NA", "N/A"))
+hapl.tab.u <- html_table(hapl.elem.u, na.strings = c("", "NA", "N/A"))
 
 
-str(hapl.tables)
-length(hapl.tables)
-as.matrix(hapl.tables[[1]])
-as.matrix(hapl.tables[[2]])
-as.matrix(hapl.tables[[99]]) 
-as.matrix(hapl.tables[[100]]) 
+####################### EXPLORE & CLEAN DATA #########################
+x1 <- html_table(hapl.elem.u, header = F, fill = T)
+x2 <- as.matrix(x1[[1]])
+x3 <- t(x2)
+str(x3)
+x <- t(as.data.frame(x[[1]]))
+str(x)
 
-as.matrix(hapl.tables[[2]])
-
-
-hapl.tables <- html_table(hapl.nodes3, header = F, na.strings = c("NA", "N/A", ""))
-hapl.mat <- as.matrix(hapl.tables[[1]])
-hapl.tables[[2]]
-hapl.tables[[3]]
-str(hapl.tables[[4]])
-as.matrix(hapl.tables[[2]])
-str(hapl.tables[[1]])
-
-X <- as.matrix(hapl.tables[[1]])
-x <- x[1,]
-unname(x[!is.na(x)])
-
-hapl.tables[[115]]
+library(XML)
+y <- XML::readHTMLTable(hapl.html)
+str(y)
+hapl.mat.p <- as.matrix(hapl.tab.p[[1]])
+hapl.mat.u <- as.matrix(hapl.tab.u[[1]])
+hapl.mat.p
+hapl.mat.u
 
 
 
-hla_type_idx <- which(hapl.mat == "HLA type", arr.ind = T)
-hla_type_freq_idx <- which(hapl.mat == "HLA type freq", arr.ind = T)
-likelihood_idx <- which(hapl.mat == "Likelihood", arr.ind = T)
-hla_type_idx
-hla_type_freq_idx
+
 
