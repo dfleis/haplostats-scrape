@@ -91,6 +91,16 @@ hapl.elem.p <- html_elements(hapl.html, "#pairedFrequencies")
 # UNPHASED GENOTYPES
 hapl.elem.u <- html_elements(hapl.html, "#mugFrequencies")
 
+#Extract the data from the element using xml2
+data = unlist(as_list(hapl.elem.u))
+# This identifies the beginning of blocks of haplotypes
+resultIndex = which(data %in% 'HLA Type')
+# A loop to paste together the results on each line
+#not sure how it behaves with manycolumns of results
+for (i in resultIndex){
+  print(paste(c('Haplotype:', paste(data[(i+3):(i+12)], collapse=' '), 'Type freq:',as.numeric(data[i+13]), 'Likelihood:',as.numeric(strsplit(data[i+14], '%'))), collapse=' '))
+}
+
 # if we want the 'raw text' instead of letting rvest try to automatically make it into a table
 hapl.txt.p <- html_text2(hapl.elem.p) # NOTE TO SELF: Maybe try using strsplit on "\n" or "\t"?
 hapl.txt.u <- html_text2(hapl.elem.u)
