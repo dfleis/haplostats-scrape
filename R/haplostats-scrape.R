@@ -95,6 +95,27 @@ hapl.elem.u <- html_elements(hapl.html, "#mugFrequencies")
 hapl.txt.p <- html_text2(hapl.elem.p) # NOTE TO SELF: Maybe try using strsplit on "\n" or "\t"?
 hapl.txt.u <- html_text2(hapl.elem.u)
 
+# try letting rvest put it in a table and see how well it does with the format
+# treat blank, "NA" and "N/A" cell values as NA
+hapl.tab.p <- html_table(hapl.elem.p, na.strings = c("", "NA", "N/A"))
+hapl.tab.u <- html_table(hapl.elem.u, na.strings = c("", "NA", "N/A"))
+
+####################### EXPLORING HOW TO CLEAN THE DATA #########################
+# Anything beyond here is likely just tests. We still need to figure out how to
+# manipulate the 'raw' data (either the the hapl.txt and hapl.tab object, whichever
+# is easier to work with) into a format that is more amenable to data analysis.
+#
+# It's not clear to me exactly how rvest is taking the raw html structure and
+# putting it into the txt/tab objects, but it is clear that it's unbelievably
+# messy and will need either some clever tricks to reliably pipe the data
+# into a matrix/list/whatever.
+#
+# It is likely that we will have to do some string manipulation to clean up
+# the data (see the "stringr" and "stringi" libraries, I'm sure there ar eother
+# useful tools out there for string manipulation/web scraping/general data wrangling).
+# It may be a good idea to investigate whether a clever set of regex can 
+# accomplish this job (or a part of it). 
+
 
 
 ##### BELOW IS TESTING GARBAGE
@@ -107,12 +128,11 @@ su[!(su %in% c("", "\n", "\t"))]
 
 str(su)
 
-# try letting rvest put it in a table and see how well it does with the format
-hapl.tab.p <- html_table(hapl.elem.p, na.strings = c("", "NA", "N/A"))
-hapl.tab.u <- html_table(hapl.elem.u, na.strings = c("", "NA", "N/A"))
 
 
-####################### EXPLORE & CLEAN DATA #########################
+
+#
+#
 x1 <- html_table(hapl.elem.u, header = F, fill = T)
 x2 <- as.matrix(x1[[1]])
 x3 <- t(x2)
