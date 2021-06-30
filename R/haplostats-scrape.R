@@ -1,4 +1,11 @@
 #####################################################################################
+#
+# #### IMPORTANT NOTE ####
+# If we wish to make repeated calls to the haplostats page in quick succession
+# (e.g. through a loop) then it is worth looking at the 'polite' library to
+# not risk overburdening the haplostats servers.
+# ########################
+#
 # Scrapes data generated from the haplostats.org query page form. The
 # first part sets the different arguments required by the haplostats 
 # form. To see all the arguments required by the form print the results
@@ -8,7 +15,8 @@
 #
 #####################################################################################
 library(rvest)
-library(xml2) # xml2::as_list
+library(xml2)    # xml2::as_list
+library(stringr) # stringr::str_detect
 
 #===== CREATE & LOOK AT THE HAPLOSTATS PAGE/FORM =====#
 url          <- "https://haplostats.org/"
@@ -31,6 +39,14 @@ dataset <- "21|NMDP.FULL-COMPOSITE.1.1.0.2011-08-25|NMDP full 2011"
 # "A~B~DRB1"             # A~B~DRB1
 # "A~C~B~DRB1"           # A~C~B~DRB1
 haplotypeLoci <- "A~C~B~DRB1~DQB1" 
+
+## "Populations"
+# "AFA", "AAFA", "AFB", "CARB"
+# "API", "AINDI", "FILII", "HAWI", "JAPI", "KORI", "NCHI", "SCSEAI", "VIET"
+# "CAU", "MENAFC", "EURCAU", 
+# "HIS", "CARHIS", "MSWHIS", "SCAHIS"
+# "NAM", "AMIND", "CARIBI"
+populations <- c("AFA", "CAU", "CARHIS")
 
 ## "HLA type"
 a1 <- "01:01"
@@ -62,6 +78,7 @@ filled.form <- html_form_set(form = hapl.form[[1]],
                           "b2" = b2,
                           "c1" = c1,
                           "c2" = c2,
+                          "populations" = populations,
                           "drb11" = drb1_1,
                           "drb12" = drb1_2,
                           "dqb11" = dqb1_1,
@@ -92,8 +109,11 @@ hapl.elem.p <- html_elements(hapl.html, "#pairedFrequencies")
 # UNPHASED GENOTYPES
 hapl.elem.u <- html_elements(hapl.html, "#mugFrequencies")
 
+##############
+############## Can be quite slow for large outputs 
+###############
 # if we want the 'raw text' instead of letting rvest try to automatically make it into a table
-hapl.txt.p <- html_text2(hapl.elem.p) # NOTE TO SELF: Maybe try using strsplit on "\n" or "\t"?
+hapl.txt.p <- html_text2(hapl.elem.p) 
 hapl.txt.u <- html_text2(hapl.elem.u)
 
 # try letting rvest put it in a table and see how well it does with the format
@@ -117,47 +137,67 @@ hapl.tab.u <- html_table(hapl.elem.u, na.strings = c("", "NA", "N/A"))
 # It may be a good idea to investigate whether a clever set of regex can 
 # accomplish this job (or a part of it). 
 
+###
+### As per the suggestion by William: Using the xml2 library (xml2::as_list)
+### to extract the data into a less horrific format
+###
+
 #Extract the data from the element using xml2
 data = unlist(as_list(hapl.elem.u))
 # This identifies the beginning of blocks of haplotypes
 resultIndex = which(data %in% 'HLA Type')
+
 # A loop to paste together the results on each line
 #not sure how it behaves with manycolumns of results
 for (i in resultIndex){
   print(paste(c('Haplotype:', paste(data[(i+3):(i+12)], collapse=' '), 'Type freq:',as.numeric(data[i+13]), 'Likelihood:',as.numeric(strsplit(data[i+14], '%'))), collapse=' '))
 }
 
+str(data)
+str(resultIndex)
+unname(data)
+
+udata <- unname(data)
+udata
+which(data == "HLA typing resolution score")-1
+length(data)/37
+
+### Building off William's suggestion
+### Trying to further clean the data & place it into a unified data structure
+###
+resultIndex
+
+resultList <- vector(mode = "list", length = length(resultIndex))
+for (listidx in 1:length(resultIndex)) {
+  i <- resultIndex[listidx]
+  
+  haplotype  <- unname(data[(i+3):(i+12)])
+  typefreq   <- unname(as.numeric(data[i+13]))
+  likelihood <- unname(as.numeric(strsplit(data[i+14], '%')))
+  
+  # split haplotype rows into the sections left and right of the "+"
+  htypeL <- haplotype[seq(1, length(haplotype), 2)]
+  htypeL <- gsub("\\+", "", htypeL) # remove the "+" which is appended on the left portion
+  htypeR <- haplotype[seq(2, length(haplotype), 2)]
+  
+  resultList[[listidx]] <- list(haplotype  = unname(cbind(htypeL, htypeR)),
+                                typefreq   = typefreq,
+                                likelihood = likelihood)
+}
+
+str(resultList)
 
 
-##### BELOW IS TESTING GARBAGE
+# extract inner lists and place into their own data structures
+haplotype  <- lapply(resultList, function(res) res$haplotype)
+typefreq   <- sapply(resultList, function(res) res$typefreq)
+likelihood <- sapply(resultList, function(res) res$likelihood)
 
-su1 <- unlist(strsplit(hapl.txt.u, split = c("\n", "\t")))
-su2 <- unlist(strsplit(su1, split = "\t"))
-su2[su2 != ""]
 
-su[!(su %in% c("", "\n", "\t"))]
-
-str(su)
+head(haplotype)
 
 
 
-
-#
-#
-x1 <- html_table(hapl.elem.u, header = F, fill = T)
-x2 <- as.matrix(x1[[1]])
-x3 <- t(x2)
-str(x3)
-x <- t(as.data.frame(x[[1]]))
-str(x)
-
-library(XML)
-y <- XML::readHTMLTable(hapl.html)
-str(y)
-hapl.mat.p <- as.matrix(hapl.tab.p[[1]])
-hapl.mat.u <- as.matrix(hapl.tab.u[[1]])
-hapl.mat.p
-hapl.mat.u
 
 
 
