@@ -8,6 +8,7 @@
 #
 #####################################################################################
 library(rvest)
+library(xml2) # xml2::as_list
 
 #===== CREATE & LOOK AT THE HAPLOSTATS PAGE/FORM =====#
 url          <- "https://haplostats.org/"
@@ -91,16 +92,6 @@ hapl.elem.p <- html_elements(hapl.html, "#pairedFrequencies")
 # UNPHASED GENOTYPES
 hapl.elem.u <- html_elements(hapl.html, "#mugFrequencies")
 
-#Extract the data from the element using xml2
-data = unlist(as_list(hapl.elem.u))
-# This identifies the beginning of blocks of haplotypes
-resultIndex = which(data %in% 'HLA Type')
-# A loop to paste together the results on each line
-#not sure how it behaves with manycolumns of results
-for (i in resultIndex){
-  print(paste(c('Haplotype:', paste(data[(i+3):(i+12)], collapse=' '), 'Type freq:',as.numeric(data[i+13]), 'Likelihood:',as.numeric(strsplit(data[i+14], '%'))), collapse=' '))
-}
-
 # if we want the 'raw text' instead of letting rvest try to automatically make it into a table
 hapl.txt.p <- html_text2(hapl.elem.p) # NOTE TO SELF: Maybe try using strsplit on "\n" or "\t"?
 hapl.txt.u <- html_text2(hapl.elem.u)
@@ -125,6 +116,16 @@ hapl.tab.u <- html_table(hapl.elem.u, na.strings = c("", "NA", "N/A"))
 # useful tools out there for string manipulation/web scraping/general data wrangling).
 # It may be a good idea to investigate whether a clever set of regex can 
 # accomplish this job (or a part of it). 
+
+#Extract the data from the element using xml2
+data = unlist(as_list(hapl.elem.u))
+# This identifies the beginning of blocks of haplotypes
+resultIndex = which(data %in% 'HLA Type')
+# A loop to paste together the results on each line
+#not sure how it behaves with manycolumns of results
+for (i in resultIndex){
+  print(paste(c('Haplotype:', paste(data[(i+3):(i+12)], collapse=' '), 'Type freq:',as.numeric(data[i+13]), 'Likelihood:',as.numeric(strsplit(data[i+14], '%'))), collapse=' '))
+}
 
 
 
