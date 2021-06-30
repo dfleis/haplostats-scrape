@@ -46,7 +46,14 @@ haplotypeLoci <- "A~C~B~DRB1~DQB1"
 # "CAU", "MENAFC", "EURCAU", 
 # "HIS", "CARHIS", "MSWHIS", "SCAHIS"
 # "NAM", "AMIND", "CARIBI"
-populations <- c("AFA", "CAU", "CARHIS")
+populations <- c("AFA", "AAFA", "AFB", "API", "SCSEAI", "CAU", "NAM")
+
+# storing for later (if needed)
+allpops <- c("AFA", "AAFA", "AFB", "CARB", 
+             "API", "AINDI", "FILII", "HAWI", "JAPI", "KORI", "NCHI", "SCSEAI", "VIET",
+             "CAU", "MENAFC", "EURCAU",
+             "HIS", "CARHIS", "MSWHIS", "SCAHIS",
+             "NAM", "AMIND", "CARIBI")
 
 ## "HLA type"
 a1 <- "01:01"
@@ -55,8 +62,8 @@ b1 <- "08:01"
 b2 <- "08:01"
 c1 <- NULL
 c2 <- NULL
-drb1_1 <- "03:01"
-drb1_2 <- "15:01"
+drb1_1 <- NULL#"03:01"
+drb1_2 <- NULL#"15:01"
 dqb1_1 <- NULL
 dqb1_2 <- NULL
 drb3_1 <- NULL
@@ -65,6 +72,14 @@ drb4_1 <- NULL
 drb4_2 <- NULL
 drb5_1 <- NULL
 drb5_2 <- NULL
+# storing HLA type inputs for later
+cleanHLA <- function(x) ifelse(is.null(x), NA, x)
+hla.vec <- c(cleanHLA(a1), cleanHLA(a2), cleanHLA(b1), cleanHLA(b2), 
+             cleanHLA(c1), cleanHLA(c2), cleanHLA(drb1_1), cleanHLA(drb1_2), 
+             cleanHLA(dqb1_1), cleanHLA(dqb1_2), cleanHLA(drb3_1), cleanHLA(drb3_2),
+             cleanHLA(drb4_1), cleanHLA(drb4_2), cleanHLA(drb5_1), cleanHLA(drb5_2))
+hla.tab <- matrix(allhla.vec, ncol = 2, byrow = T)
+rownames(hla.tab) <- c("A", "B", "C", "DRB1", "DQB1", "DRB3", "DRB4", "DRB5")
 
 #===== FILL VALUES INTO THE HAPLOSTATS FORM & SUBMIT FORM =====#
 # If we wanted to set values for the 'Population' checkboxes we would
@@ -116,64 +131,140 @@ hapl.elem.u <- html_elements(hapl.html, "#mugFrequencies")
 hapl.txt.p <- html_text2(hapl.elem.p) 
 hapl.txt.u <- html_text2(hapl.elem.u)
 
-# try letting rvest put it in a table and see how well it does with the format
-# treat blank, "NA" and "N/A" cell values as NA
-hapl.tab.p <- html_table(hapl.elem.p, na.strings = c("", "NA", "N/A"))
-hapl.tab.u <- html_table(hapl.elem.u, na.strings = c("", "NA", "N/A"))
+# # try letting rvest put it in a table and see how well it does with the format
+# # treat blank, "NA" and "N/A" cell values as NA
+# hapl.tab.p <- html_table(hapl.elem.p, na.strings = c("", "NA", "N/A"))
+# hapl.tab.u <- html_table(hapl.elem.u, na.strings = c("", "NA", "N/A"))
 
-####################### EXPLORING HOW TO CLEAN THE DATA #########################
-# Anything beyond here is likely just tests. We still need to figure out how to
-# manipulate the 'raw' data (either the the hapl.txt and hapl.tab object, whichever
-# is easier to work with) into a format that is more amenable to data analysis.
-#
-# It's not clear to me exactly how rvest is taking the raw html structure and
-# putting it into the txt/tab objects, but it is clear that it's unbelievably
-# messy and will need either some clever tricks to reliably pipe the data
-# into a matrix/list/whatever.
-#
-# It is likely that we will have to do some string manipulation to clean up
-# the data (see the "stringr" and "stringi" libraries, I'm sure there ar eother
-# useful tools out there for string manipulation/web scraping/general data wrangling).
-# It may be a good idea to investigate whether a clever set of regex can 
-# accomplish this job (or a part of it). 
-
-###
 ### As per the suggestion by William: Using the xml2 library (xml2::as_list)
 ### to extract the data into a less horrific format
-###
-
 #Extract the data from the element using xml2
-data = unlist(as_list(hapl.elem.u))
+data = unname(unlist(as_list(hapl.elem.u)))
 # This identifies the beginning of blocks of haplotypes
 resultIndex = which(data %in% 'HLA Type')
 
 # A loop to paste together the results on each line
 #not sure how it behaves with manycolumns of results
 for (i in resultIndex){
-  print(paste(c('Haplotype:', paste(data[(i+3):(i+12)], collapse=' '), 'Type freq:',as.numeric(data[i+13]), 'Likelihood:',as.numeric(strsplit(data[i+14], '%'))), collapse=' '))
+  print(paste(c('Haplotype:',  paste(data[(i+3):(i+12)], collapse=' '), 
+                'Type freq:',  as.numeric(data[i+13]), 
+                'Likelihood:', as.numeric(strsplit(data[i+14], '%'))), collapse=' '))
 }
 
-str(data)
-str(resultIndex)
-unname(data)
+####################### EXPLORING HOW TO CLEAN THE DATA #########################
+### Building off William's suggestion
+### Trying to further clean the data & place it into a unified data structure
+###
+### NOTES:
+#   I noticed that if we leave the population checkboxes unspecified in our html_form_set() function
+#   then the haplostats page seems to include all populations by default ("AFA", "AAFA", "AFB", etc..).
+#   This seems to be one of the reason why so many entries appear to be returned when extracting the
+#   output into a usable format.
+#
+# Note that the first entries in the datahead object below are exactly those populations we
+# have specified (if we remove N/A value). Then it begins again and lists all possible
+# populations.
+#
+# Notice that the cells contain "Likelihood" repeat in what appears to be regular (the regularity
+# may depend on the number of populations specified by the user).
+#
+# Notice that the cells corresponding to the HLA "Likelihood" values will have a "%" in it.
+# We can use this to extract other values. Let 'idx' correspond to an index of a "Likelihood"
+# value, then
+#   1) idx - 1 seems to be the location containing the "HLA type freq" values
+#   2) idx - 2 to idx - 11 seems to be locations containing the HLA types. I **believe** it's 
+#      separated over 10 indices because it splits (the 5 HLA names) x (the 2 types) into
+#      distinct entries, i.e. it splits the 5 rows x the 2 types of each cell into different 
+#       entries
+# 
+#
+# OPEN QUESTIONS: How often to entries repeat? What cells to they correspond to?
+# How does selecting different populations affect the indices?
+
+# partition data into its header info and the "body"
+data_raw <- unname(unlist(as_list(hapl.elem.u)))
+row_idx  <- which(data_raw == "Likelihood") 
+datahead <- data_raw[1:(row_idx[1])]    # save the header info cells if we need them later
+data     <- data_raw[-(1:(row_idx[1]))] # remove the first cells that contain the header info/titles/etc
+
+datahead
+datahead_noNA <- datahead[datahead != "N/A"]
+datahead_noNA
+
+datahead[1:length(populations)]
+
+
+
+data <- data[-(1:row_idx[1])]   
+head(data, 100)
+
+
+like_idx <- which(str_detect(data, "\\%")) 
+hla_like <- as.numeric(gsub("%", "", data[like_idx])) # Likelihood
+hla_freq <- as.numeric(data[like_idx-1])              # HLA type frequency
+hla_raw  <- lapply(2:11, function(i) data[like_idx-i])
+
+hla_like
+
+
+
+hla_like
+which(hla_like == 15.2)
+tail(data)
+
+
+
+hla_tmp <- data.frame(hla_freq, hla_like)
+allpops
+head(hla_like, 100)
+head(hla_tmp, 50)
+
+hla_like[seq(1, length(hla_like), 23)]
+
+hla_tmp <- cbind(hla_like, hla_freq)
+idx <- which(hla_freq == 13.7)
+hla_tmp[31,] # every 10 values seems to give tthe displayed cells (not sure what the other 9 are)
+
+hla_tmp[seq(1, nrow(hla_tmp), 10),]
+head(hla_tmp, 30)
+
+
+head(data, 100)
+
+
+str(hla_raw)
+hla_freq
+hla_freq[seq(1, length(hla_freq), 5)]
+
+head(data, 100)
+which(data == "HLA Type")
+
 
 udata <- unname(data)
 udata
 which(data == "HLA typing resolution score")-1
+length(data)/length(populations)
+length(data)/(length(allpops)+2)
+length(data)/sum(is.na(allhla.vec))
+sum(is.na(allhla.vec))
+allhla.tab
+length(data)/3
 length(data)/37
+allpops
+
+
 
 ### Building off William's suggestion
 ### Trying to further clean the data & place it into a unified data structure
 ###
-resultIndex
 
 resultList <- vector(mode = "list", length = length(resultIndex))
 for (listidx in 1:length(resultIndex)) {
   i <- resultIndex[listidx]
   
-  haplotype  <- unname(data[(i+3):(i+12)])
-  typefreq   <- unname(as.numeric(data[i+13]))
-  likelihood <- unname(as.numeric(strsplit(data[i+14], '%')))
+  haplotype  <- data[(i+3):(i+12)]
+  typefreq   <- as.numeric(data[i+13])
+  likelihood <- as.numeric(strsplit(data[i+14], '%'))
   
   # split haplotype rows into the sections left and right of the "+"
   htypeL <- haplotype[seq(1, length(haplotype), 2)]
@@ -184,10 +275,6 @@ for (listidx in 1:length(resultIndex)) {
                                 typefreq   = typefreq,
                                 likelihood = likelihood)
 }
-
-str(resultList)
-
-
 # extract inner lists and place into their own data structures
 haplotype  <- lapply(resultList, function(res) res$haplotype)
 typefreq   <- sapply(resultList, function(res) res$typefreq)
@@ -195,7 +282,7 @@ likelihood <- sapply(resultList, function(res) res$likelihood)
 
 
 head(haplotype)
-
+likelihood
 
 
 
