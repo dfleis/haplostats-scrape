@@ -72,13 +72,14 @@ drb4_1 <- NULL
 drb4_2 <- NULL
 drb5_1 <- NULL
 drb5_2 <- NULL
-# storing HLA type inputs for later
+
+# storing HLA type inputs for later (not sure if it'll be useful, but just in case)
 cleanHLA <- function(x) ifelse(is.null(x), NA, x)
 hla.vec <- c(cleanHLA(a1), cleanHLA(a2), cleanHLA(b1), cleanHLA(b2), 
              cleanHLA(c1), cleanHLA(c2), cleanHLA(drb1_1), cleanHLA(drb1_2), 
              cleanHLA(dqb1_1), cleanHLA(dqb1_2), cleanHLA(drb3_1), cleanHLA(drb3_2),
              cleanHLA(drb4_1), cleanHLA(drb4_2), cleanHLA(drb5_1), cleanHLA(drb5_2))
-hla.tab <- matrix(allhla.vec, ncol = 2, byrow = T)
+hla.tab <- matrix(hla.vec, ncol = 2, byrow = T)
 rownames(hla.tab) <- c("A", "B", "C", "DRB1", "DQB1", "DRB3", "DRB4", "DRB5")
 
 #===== FILL VALUES INTO THE HAPLOSTATS FORM & SUBMIT FORM =====#
