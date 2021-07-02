@@ -62,7 +62,7 @@ b1 <- "08:01"
 b2 <- "08:01"
 c1 <- NULL
 c2 <- NULL
-drb1_1 <- NULL#"03:01"
+drb1_1 <- "03:01"
 drb1_2 <- NULL#"15:01"
 dqb1_1 <- NULL
 dqb1_2 <- NULL
@@ -75,12 +75,12 @@ drb5_2 <- NULL
 
 # storing HLA type inputs for later (not sure if it'll be useful, but just in case)
 cleanHLA <- function(x) ifelse(is.null(x), NA, x)
-hla.vec <- c(cleanHLA(a1), cleanHLA(a2), cleanHLA(b1), cleanHLA(b2), 
+allhla.vec <- c(cleanHLA(a1), cleanHLA(a2), cleanHLA(b1), cleanHLA(b2), 
              cleanHLA(c1), cleanHLA(c2), cleanHLA(drb1_1), cleanHLA(drb1_2), 
              cleanHLA(dqb1_1), cleanHLA(dqb1_2), cleanHLA(drb3_1), cleanHLA(drb3_2),
              cleanHLA(drb4_1), cleanHLA(drb4_2), cleanHLA(drb5_1), cleanHLA(drb5_2))
-hla.tab <- matrix(hla.vec, ncol = 2, byrow = T)
-rownames(hla.tab) <- c("A", "B", "C", "DRB1", "DQB1", "DRB3", "DRB4", "DRB5")
+allhla.tab <- matrix(allhla.vec, ncol = 2, byrow = T)
+rownames(allhla.tab) <- c("A", "B", "C", "DRB1", "DQB1", "DRB3", "DRB4", "DRB5")
 
 #===== FILL VALUES INTO THE HAPLOSTATS FORM & SUBMIT FORM =====#
 # If we wanted to set values for the 'Population' checkboxes we would
