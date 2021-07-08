@@ -261,5 +261,6 @@ out.by.pops <- lapply(populations, function(pop) {
 })
 names(out.by.pops) <- populations
 
-out.by.hla[[1]]
-out.by.pops
+###### display outputs/results
+out.by.hla[[1]] # most common HLA, split by population
+out.by.pops[["AFA"]] # list of HLA by population "AFA"
