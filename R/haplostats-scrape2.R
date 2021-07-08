@@ -261,4 +261,4 @@ names(out.by.pops) <- populations
 
 ###### display outputs/results
 out.by.hla[[1]] # most common HLA, split by population
-out.by.pops[["AFA"]] # list of HLA by population "AFA"
+head(out.by.pops[["AFA"]]) # list of HLA by population "AFA"
