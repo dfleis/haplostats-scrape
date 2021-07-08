@@ -1,0 +1,36 @@
+---
+title: "Untitled"
+author: "David Fleischer"
+date: "Last Update: `r format(Sys.time(), '%d %B, %Y')`"
+output: 
+  html_document:
+    toc: true
+    toc_depth: 2
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+---
+
+# Scraping Data from HaploStats
+
+The data made available by HaploStats cannot be directly access through a URL. The data does not exist on a unique webpage and is only generated once the user specifies a dataset, populations, HLA type, etc. through the webform at https://haplostats.org/. As such, we will need to find a way to submit values to the webform through R and then (hopefully) store the generated webpage as if it was directly accessible through some URL.
+
+```{r}
+library(rvest) # does the heavy lifting in building our scraping tool
+
+url <- "https://haplostats.org/"
+```
+
+
+## Creating the Webform
+
+```{r}
+# Use to slow down the load on the haplostats servers. Temporary stop-gap while I 
+# figure out how to integrate the 'polite' library with rvest's html_form, html_form_set, 
+# and session_submit
+Sys.sleep(3 + runif(1)) # TEMPORARY 
+```
+
